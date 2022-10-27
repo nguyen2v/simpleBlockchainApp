@@ -1,18 +1,5 @@
-import { useRef, useEffect } from 'react';
-
+// This component is to display the prop passed down from component './index.jsx'
 function Contract({ value }) {
-  const spanEle = useRef(null);
-
-  useEffect(() => {
-    spanEle.current.classList.add('flash');
-    const flash = setTimeout(() => {
-      spanEle.current.classList.remove('flash');
-    }, 300);
-    return () => {
-      clearTimeout(flash);
-    };
-  }, [value]);
-
   return (
     <code
       style={{
@@ -22,7 +9,7 @@ function Contract({ value }) {
         height: '10rem',
       }}
     >
-      <span className="secondary-color" ref={spanEle}>
+      <span style={{ color: 'red', fontSize: '2em' }}>
         <strong>{value}</strong>
       </span>
     </code>

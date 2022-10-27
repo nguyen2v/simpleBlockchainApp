@@ -1,24 +1,32 @@
+// This component consists of buttons used to retrieve/send data to ipfs and blockchain
+
 import { useState } from 'react';
 import useEth from '../../contexts/EthContext/useEth';
 
 function ContractBtns({ setValue }) {
-  const [ipfsHash, setIpfsHash] = useState();
-  const ipfsHttpClient = require('ipfs-http-client');
-  const client = ipfsHttpClient({ url: 'http://127.0.0.1:5001/api/v0' });
-  console.log(client);
+  // State to store input data to be sent
+  const [inputValue, setInputValue] = useState('');
+
+  // Import data for contracts and accounts from Context Api
   const {
     state: { contract, accounts },
   } = useEth();
-  const [inputValue, setInputValue] = useState('');
 
+  // IPFS setup
+  const [ipfsHash, setIpfsHash] = useState(); //Store hash to get data from ipfs
+  const ipfsHttpClient = require('ipfs-http-client'); // Import ipfs-http-client
+  const client = ipfsHttpClient({ url: 'http://127.0.0.1:5001/api/v0' }); // Initialize ipfs with api port
+
+  // Function handler to handle input
   const handleInputChange = (e) => {
-    if (/^\d+$|^$/.test(e.target.value)) {
+    // set input value if it is positive
+    if (e.target.value.trim()) {
       setInputValue(e.target.value);
     }
   };
 
+  // Function to retrieve data
   const read = async () => {
-    console.log('Read:', ipfsHash);
     fetch(`http://localhost:8080/ipfs/${ipfsHash}`)
       .then((data) => data.json())
       .then((e) => {
@@ -28,19 +36,20 @@ function ContractBtns({ setValue }) {
     // setValue(value);
   };
 
+  // Function to write data to ipfs
   const write = async (e) => {
-    if (e.target.tagName === 'INPUT') {
-      return;
-    }
-    if (inputValue === '') {
+    if (inputValue.trim() === '') {
       alert('Please enter a value to write.');
       return;
     }
     const buf = Buffer.from(inputValue, 'utf8');
     const created = await client.add(buf);
+    console.log('hash', created[0].path);
     setIpfsHash(created[0].path);
     const newValue = parseInt(inputValue);
     await contract.methods.write(newValue).send({ from: accounts[0] });
+    // const newValue = ipfsHash;
+    // await contract.methods.write(ipfsHash).send({ from: accounts[0] });
   };
 
   return (
