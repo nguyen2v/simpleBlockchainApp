@@ -1,6 +1,6 @@
 // This component consists of buttons used to retrieve/send data to ipfs and blockchain
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useEth from '../../contexts/EthContext/useEth';
 
 function ContractBtns({ setValue }) {
@@ -27,13 +27,18 @@ function ContractBtns({ setValue }) {
 
   // Function to retrieve data
   const read = async () => {
-    fetch(`http://localhost:8080/ipfs/${ipfsHash}`)
-      .then((data) => data.json())
-      .then((e) => {
-        setValue(e);
-      });
+    //http://localhost:8080/ipfs/${ipfsHash}
+    // fetch(`http://localhost:8080/ipfs/${ipfsHash}`)
+    //   .then((data) => data.json())
+    //   .then((e) => {
+    //     // setValue(e);
+    //     console.log('error', e);
+    //   });
     // const value = await contract.methods.read().call({ from: accounts[0] });
     // setValue(value);
+    if (!ipfsHash) return;
+    let res = await fetch(`http://localhost:8080/ipfs/${ipfsHash}`);
+    console.log('response api: ', res);
   };
 
   // Function to write data to ipfs
@@ -44,13 +49,29 @@ function ContractBtns({ setValue }) {
     }
     const buf = Buffer.from(inputValue, 'utf8');
     const created = await client.add(buf);
-    console.log('hash', created[0].path);
-    setIpfsHash(created[0].path);
-    const newValue = parseInt(inputValue);
-    await contract.methods.write(newValue).send({ from: accounts[0] });
-    // const newValue = ipfsHash;
-    // await contract.methods.write(ipfsHash).send({ from: accounts[0] });
+    const hash = created[0].path;
+    //setIpfsHash(hash);
+    //console.log('hash type', typeof hash);
+    // const newValue = parseInt(inputValue);
+    // await contract.methods.write(newValue).send({ from: accounts[0] });
+    // write ipfs hash to blockchain
+    await contract.methods.write(hash).send({ from: accounts[0] });
   };
+
+  const getIpfsHash = async () => {
+    const hash = await contract.methods.read().call({ from: accounts[0] });
+    setIpfsHash(hash);
+  };
+
+  useEffect(() => {
+    getIpfsHash();
+  }, []);
+
+  useEffect(() => {
+    console.log('initial hash: ', ipfsHash);
+    console.log('initial hash type: ', typeof ipfsHash);
+    read();
+  }, [ipfsHash]);
 
   return (
     <div
